@@ -1,8 +1,10 @@
 """YouTube channel connection and explicit video publishing routes."""
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import logging
+import re
 import secrets
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -71,6 +73,110 @@ def _require_upload_rights_confirmation(confirmed: bool) -> None:
             status_code=403,
             detail="Confirm that you own this video or have permission from the rights holder to publish it.",
         )
+
+
+def _get_acknowledged_upload_offset(range_header: str | None, file_size: int) -> int:
+    """Return the first byte YouTube still needs after a 308 response."""
+    if not range_header:
+        return 0
+    match = re.fullmatch(r"bytes=0-(\d+)", range_header.strip(), flags=re.IGNORECASE)
+    if not match:
+        raise HTTPException(status_code=502, detail="YouTube returned an invalid upload acknowledgement.")
+    acknowledged_end = int(match.group(1))
+    if acknowledged_end >= file_size:
+        raise HTTPException(status_code=502, detail="YouTube returned an out-of-range upload acknowledgement.")
+    return acknowledged_end + 1
+
+
+async def _upload_resumable_media(
+    client: httpx.AsyncClient,
+    upload_url: str,
+    video_path: Path,
+    access_token: str,
+    file_size: int,
+) -> httpx.Response:
+    """Transfer an MP4 in 8 MiB chunks and resume from YouTube's acknowledged byte."""
+    chunk_size = 8 * 1024 * 1024  # Multiple of Google's required 256 KiB granularity.
+    max_retries = 5
+    offset = 0
+    retries = 0
+
+    async with aiofiles.open(video_path, "rb") as video_file:
+        while offset < file_size:
+            await video_file.seek(offset)
+            chunk = await video_file.read(min(chunk_size, file_size - offset))
+            if not chunk:
+                raise HTTPException(status_code=500, detail="The generated video file ended unexpectedly.")
+
+            end = offset + len(chunk) - 1
+            try:
+                response = await client.put(
+                    upload_url,
+                    headers={
+                        "Authorization": f"Bearer {access_token}",
+                        "Content-Type": "video/mp4",
+                        "Content-Length": str(len(chunk)),
+                        "Content-Range": f"bytes {offset}-{end}/{file_size}",
+                    },
+                    content=chunk,
+                )
+            except httpx.HTTPError:
+                response = None
+
+            if response is not None and response.status_code in {200, 201}:
+                return response
+
+            if response is not None and response.status_code == 308:
+                next_offset = _get_acknowledged_upload_offset(
+                    response.headers.get("range"), file_size
+                )
+                if next_offset > offset:
+                    offset = next_offset
+                    retries = 0
+                    continue
+                retries += 1
+            elif response is not None and response.status_code not in {500, 502, 503, 504}:
+                logger.warning("YouTube chunk upload returned HTTP %s", response.status_code)
+                raise HTTPException(status_code=502, detail="YouTube rejected a video upload chunk.")
+            else:
+                retries += 1
+
+            if retries > max_retries:
+                raise HTTPException(status_code=502, detail="The YouTube upload could not be resumed after repeated network errors.")
+
+            await asyncio.sleep(min(2 ** (retries - 1), 8))
+
+            # Probe after uncertain transfers; YouTube's Range header is authoritative.
+            try:
+                probe = await client.put(
+                    upload_url,
+                    headers={
+                        "Authorization": f"Bearer {access_token}",
+                        "Content-Length": "0",
+                        "Content-Range": f"bytes */{file_size}",
+                    },
+                    content=b"",
+                )
+            except httpx.HTTPError:
+                continue
+
+            if probe.status_code in {200, 201}:
+                return probe
+            if probe.status_code == 308:
+                server_offset = _get_acknowledged_upload_offset(
+                    probe.headers.get("range"), file_size
+                )
+                if server_offset > offset:
+                    offset = server_offset
+                    retries = 0
+                continue
+            if probe.status_code in {500, 502, 503, 504}:
+                continue
+
+            logger.warning("YouTube upload status probe returned HTTP %s", probe.status_code)
+            raise HTTPException(status_code=502, detail="YouTube could not confirm the upload's resumable status.")
+
+    raise HTTPException(status_code=502, detail="YouTube did not finalize the resumable video upload.")
 
 
 def _validate_upload_metadata(title: str, description: str, privacy_status: str) -> None:
@@ -411,27 +517,19 @@ async def upload_clip_to_youtube(
         if not upload_url or not upload_url.startswith("https://www.googleapis.com/upload/youtube/v3/videos?"):
             raise HTTPException(status_code=502, detail="YouTube did not return a valid resumable upload URL.")
 
-        async def file_chunks():
-            async with aiofiles.open(video_path, "rb") as video_file:
-                while True:
-                    chunk = await video_file.read(UPLOAD_CHUNK_BYTES)
-                    if not chunk:
-                        break
-                    yield chunk
-
         try:
-            upload_response = await client.put(
+            upload_response = await _upload_resumable_media(
+                client,
                 upload_url,
-                headers={
-                    "Authorization": f"Bearer {access_token}",
-                    "Content-Type": "video/mp4",
-                    "Content-Length": str(file_size),
-                },
-                content=file_chunks(),
+                video_path,
+                access_token,
+                file_size,
             )
-        except httpx.HTTPError:
+        except HTTPException:
+            raise
+        except Exception:
             logger.exception("YouTube media transfer failed for user %s", user_id)
-            raise HTTPException(status_code=502, detail="The video transfer to YouTube failed. Please retry the upload.")
+            raise HTTPException(status_code=502, detail="The video transfer to YouTube failed. Please retry.")
 
     if upload_response.status_code not in {200, 201}:
         logger.warning("YouTube media upload returned HTTP %s for user %s", upload_response.status_code, user_id)
