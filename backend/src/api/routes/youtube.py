@@ -101,6 +101,10 @@ async def connect_youtube(request: Request, db: AsyncSession = Depends(get_db)):
     expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
 
     await db.execute(
+        text("DELETE FROM youtube_oauth_states WHERE expires_at <= NOW()")
+    )
+
+    await db.execute(
         text(
             """
             INSERT INTO youtube_oauth_states (state_hash, user_id, expires_at)
