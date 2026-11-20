@@ -72,7 +72,7 @@ async def test_process_video_complete_uses_fallback_when_ai_selects_no_segments(
             "relevance_score": 0.25,
             "reasoning": (
                 "AI analysis did not identify a strong standalone segment, "
-                "so SupoClip generated the first available portion of the video."
+                "so Movie Shorts generated the first available portion of the video."
             ),
             "virality_score": 0,
             "hook_score": 0,
@@ -80,6 +80,7 @@ async def test_process_video_complete_uses_fallback_when_ai_selects_no_segments(
             "value_score": 0,
             "shareability_score": 0,
             "hook_type": "fallback",
+            "hook_title": None,
         }
     ]
     analysis = json.loads(result["analysis_json"])
