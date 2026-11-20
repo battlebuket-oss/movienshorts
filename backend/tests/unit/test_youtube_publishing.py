@@ -1,6 +1,7 @@
 import httpx
 import pytest
 from fastapi import HTTPException
+from pydantic import ValidationError
 
 from src.api.routes.youtube import (
     OAUTH_SCOPES,
@@ -8,6 +9,7 @@ from src.api.routes.youtube import (
     _require_upload_rights_confirmation,
     _upload_resumable_media,
     _validate_upload_metadata,
+    YouTubeUploadRequest,
     build_oauth_url,
 )
 
@@ -108,3 +110,20 @@ async def test_resumable_upload_continues_from_acknowledged_byte(tmp_path):
     assert response.status_code == 201
     assert received_ranges == ["bytes 0-8/9", "bytes 3-8/9"]
     assert received_chunks == [b"abcdefghi", b"defghi"]
+
+
+
+def test_upload_payload_requires_a_strict_boolean_rights_confirmation():
+    valid = YouTubeUploadRequest(
+        clip_id="clip-id",
+        title="A Short",
+        rights_confirmed=True,
+    )
+    assert valid.rights_confirmed is True
+
+    with pytest.raises(ValidationError):
+        YouTubeUploadRequest(
+            clip_id="clip-id",
+            title="A Short",
+            rights_confirmed="true",
+        )
