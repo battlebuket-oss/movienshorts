@@ -17,6 +17,7 @@ export default function YoutubePublishButton({ clipId, defaultTitle, returnTo }:
   const [title, setTitle] = useState(defaultTitle.slice(0, 100));
   const [description, setDescription] = useState("");
   const [privacy, setPrivacy] = useState<"private" | "unlisted" | "public">("private");
+  const [rightsConfirmed, setRightsConfirmed] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
@@ -36,6 +37,10 @@ export default function YoutubePublishButton({ clipId, defaultTitle, returnTo }:
   const upload = async () => {
     if (!title.trim()) {
       setError("Enter a title for the Short.");
+      return;
+    }
+    if (!rightsConfirmed) {
+      setError("Confirm that you own this video or have permission to publish it.");
       return;
     }
     setUploading(true);
@@ -106,10 +111,19 @@ export default function YoutubePublishButton({ clipId, defaultTitle, returnTo }:
               <option value="public">Public</option>
             </select>
           </div>
+          <label className="flex items-start gap-2 text-xs text-stone-600">
+            <input
+              type="checkbox"
+              checked={rightsConfirmed}
+              onChange={(event) => setRightsConfirmed(event.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 rounded border-stone-300 accent-stone-900"
+            />
+            <span>I own this video or have permission from the rights holder to publish this clip, including any included music or other material.</span>
+          </label>
           <p className="text-xs text-stone-500">The video uploads only when you confirm below. Private is selected by default.</p>
           {error && <p className="flex items-start gap-1.5 text-xs text-red-600"><AlertCircle className="h-4 w-4 shrink-0" />{error}</p>}
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" onClick={upload} disabled={uploading || !title.trim()}>
+            <Button size="sm" onClick={upload} disabled={uploading || !title.trim() || !rightsConfirmed}>
               {uploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Youtube className="mr-2 h-4 w-4" />}
               {uploading ? "Uploading…" : "Confirm upload"}
             </Button>
