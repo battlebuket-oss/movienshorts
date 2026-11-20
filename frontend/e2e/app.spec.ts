@@ -65,7 +65,7 @@ test("admin user can access the admin dashboard", async ({ page }) => {
 
 
 test("user can confirm rights and upload a generated clip to a connected YouTube channel", async ({ page }) => {
-  let uploadPayload: Record<string, unknown> | null = null;
+  const uploadPayloads: Record<string, unknown>[] = [];
 
   await page.route("**/api/youtube/status", async (route) => {
     await route.fulfill({
@@ -83,7 +83,7 @@ test("user can confirm rights and upload a generated clip to a connected YouTube
   });
 
   await page.route("**/api/youtube/upload", async (route) => {
-    uploadPayload = route.request().postDataJSON() as Record<string, unknown>;
+    uploadPayloads.push(route.request().postDataJSON() as Record<string, unknown>);
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -116,10 +116,11 @@ test("user can confirm rights and upload a generated clip to a connected YouTube
     "href",
     "https://www.youtube.com/watch?v=e2eShortVideo123",
   );
-  expect(uploadPayload).toMatchObject({
+  expect(uploadPayloads).toHaveLength(1);
+  expect(uploadPayloads[0]).toMatchObject({
     rights_confirmed: true,
     privacy_status: "private",
   });
-  expect(uploadPayload?.clip_id).toBeTruthy();
-  expect(uploadPayload?.title).toBeTruthy();
+  expect(uploadPayloads[0].clip_id).toBeTruthy();
+  expect(uploadPayloads[0].title).toBeTruthy();
 });
