@@ -51,6 +51,7 @@ export default function YoutubeChannelConnect({ returnTo = "/" }: { returnTo?: s
       const response = await fetch("/api/youtube/disconnect", { method: "DELETE" });
       if (!response.ok) throw new Error("Could not disconnect the YouTube channel.");
       setStatus({ connected: false, channel: null });
+      window.dispatchEvent(new Event("movie-shorts-youtube-connection-changed"));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not disconnect the YouTube channel.");
     } finally {
