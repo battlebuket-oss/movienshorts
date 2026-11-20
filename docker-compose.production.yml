@@ -55,6 +55,7 @@ services:
     read_only: true
     tmpfs:
       - /tmp:size=64m,noexec,nosuid
+      - /app/.next/cache:size=512m,uid=1001,gid=1001
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3107/"]
       interval: 30s
