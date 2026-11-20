@@ -200,16 +200,22 @@ async def complete_youtube_oauth(
     refresh_token = token_data.get("refresh_token")
     if not refresh_token:
         previous = await db.execute(
-            text("SELECT refresh_token_encrypted FROM youtube_connections WHERE user_id = :user_id"),
+            text(
+                """
+                SELECT channel_id, refresh_token_encrypted
+                FROM youtube_connections
+                WHERE user_id = :user_id
+                """
+            ),
             {"user_id": user_id},
         )
-        previous_encrypted = previous.scalar_one_or_none()
-        if not previous_encrypted:
+        previous_connection = previous.mappings().first()
+        if not previous_connection or previous_connection["channel_id"] != channel_id:
             raise HTTPException(
                 status_code=400,
-                detail="Google did not return a refresh token. Remove Movie Shorts from your Google Account's connected apps, then connect again.",
+                detail="Google did not return a new refresh token for this channel. Remove Movie Shorts from your Google Account's connected apps, then connect again.",
             )
-        encrypted_refresh_token = previous_encrypted
+        encrypted_refresh_token = previous_connection["refresh_token_encrypted"]
     else:
         encrypted_refresh_token = encrypt_setting_value(refresh_token)
 
