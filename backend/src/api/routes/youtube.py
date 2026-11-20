@@ -382,7 +382,7 @@ async def upload_clip_to_youtube(
         "X-Upload-Content-Type": "video/mp4",
     }
 
-    async with httpx.AsyncClient(timeout=httpx.Timeout(connect=30.0, read=300.0, write=300.0, pool=30.0), follow_redirects=False) as client:
+    async with httpx.AsyncClient(timeout=httpx.Timeout(connect=30.0, read=1800.0, write=1800.0, pool=30.0), follow_redirects=False) as client:
         try:
             init_response = await client.post(
                 UPLOAD_ENDPOINT,
