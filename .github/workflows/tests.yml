@@ -76,7 +76,7 @@ jobs:
       NEXT_PUBLIC_API_URL: http://127.0.0.1:8000
       NEXT_PUBLIC_APP_URL: http://localhost:3107
       NEXT_PUBLIC_SELF_HOST: "true"
-      NEXT_PUBLIC_LANDING_ONLY_MODE: "true"
+      NEXT_PUBLIC_LANDING_ONLY_MODE: "false"
       BETTER_AUTH_SECRET: movie-shorts-ci-better-auth-secret
       BETTER_AUTH_URL: http://localhost:3107
       BACKEND_AUTH_SECRET: movie-shorts-ci-backend-auth-secret
