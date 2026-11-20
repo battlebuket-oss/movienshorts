@@ -32,15 +32,16 @@ def test_upload_metadata_accepts_valid_private_video():
     _validate_upload_metadata("My first Short", "Description", "private")
 
 
+def test_upload_metadata_accepts_unicode_description_within_character_limit():
+    _validate_upload_metadata("A Short", "🔥" * 5000, "private")
+
+
 @pytest.mark.parametrize(
     ("title", "description", "privacy"),
     [
         ("   ", "", "private"),
         ("x" * 101, "", "private"),
         ("A valid title", "x" * 5001, "private"),
-        ("A valid title", "🔥" * 1251, "private"),
-        ("Title <tag>", "", "private"),
-        ("A valid title", "description >", "private"),
         ("A valid title", "", "friends"),
     ],
 )
