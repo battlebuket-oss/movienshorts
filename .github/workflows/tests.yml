@@ -9,7 +9,7 @@ on:
 
 jobs:
   backend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     services:
       postgres:
         image: postgres:15-alpine
@@ -52,7 +52,7 @@ jobs:
         run: cd backend && .venv/bin/pytest
 
   frontend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       NEXT_PUBLIC_SELF_HOST: "true"
       BACKEND_AUTH_SECRET: supoclip_test_secret
@@ -70,7 +70,7 @@ jobs:
         run: cd frontend && pnpm run test:coverage
 
   frontend-build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       DATABASE_URL: postgresql://supoclip:supoclip_password@127.0.0.1:5432/supoclip
       NEXT_PUBLIC_API_URL: http://127.0.0.1:8000
@@ -95,7 +95,7 @@ jobs:
         run: cd frontend && pnpm run build
 
   production-compose:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       NEXT_PUBLIC_API_URL: https://api.example.invalid
       NEXT_PUBLIC_APP_URL: https://movie-shorts.example.invalid
@@ -117,7 +117,7 @@ jobs:
         run: docker compose --env-file /dev/null -f docker-compose.production.yml build --pull
 
   e2e:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs:
       - backend
       - frontend
