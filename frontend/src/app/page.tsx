@@ -23,6 +23,7 @@ import { Switch } from "@/components/ui/switch";
 import LandingPage from "@/components/landing-page";
 import { isLandingOnlyModeEnabled } from "@/lib/app-flags";
 import { CREATOR_PRESETS, getCreatorPreset, type CreatorPresetId } from "@/lib/creator-presets";
+import { getYouTubeThumbnailUrl } from "@/lib/youtube-video";
 
 interface LatestTask {
   id: string;
@@ -67,43 +68,6 @@ type ProxyUploadAuthorization = {
 };
 
 type UploadAuthorization = DirectUploadAuthorization | ProxyUploadAuthorization;
-
-const extractYouTubeVideoId = (value: string): string | null => {
-  const input = value.trim();
-  if (!input) return null;
-
-  try {
-    const parsed = new URL(input);
-    const host = parsed.hostname.replace(/^www\./, "");
-
-    if (host === "youtu.be") {
-      const id = parsed.pathname.split("/").filter(Boolean)[0];
-      return id && id.length === 11 ? id : null;
-    }
-
-    if (host === "youtube.com" || host === "m.youtube.com" || host === "music.youtube.com") {
-      const fromSearch = parsed.searchParams.get("v");
-      if (fromSearch && fromSearch.length === 11) {
-        return fromSearch;
-      }
-
-      const pathParts = parsed.pathname.split("/").filter(Boolean);
-      const embedId = pathParts[0] === "embed" ? pathParts[1] : null;
-      if (embedId && embedId.length === 11) {
-        return embedId;
-      }
-    }
-  } catch {
-    return null;
-  }
-
-  return null;
-};
-
-const getYouTubeThumbnailUrl = (value: string): string | null => {
-  const videoId = extractYouTubeVideoId(value);
-  return videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : null;
-};
 
 async function requestUploadAuthorization(): Promise<UploadAuthorization> {
   const response = await fetch("/api/upload/authorization", {
