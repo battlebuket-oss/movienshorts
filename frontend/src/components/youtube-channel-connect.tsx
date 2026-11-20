@@ -28,7 +28,21 @@ export default function YoutubeChannelConnect({ returnTo = "/" }: { returnTo?: s
     }
   }, []);
 
-  useEffect(() => { void refresh(); }, [refresh]);
+  useEffect(() => {
+    void refresh();
+    const query = new URLSearchParams(window.location.search);
+    const code = query.get("youtube_error");
+    const messages: Record<string, string> = {
+      not_configured: "YouTube publishing needs Google OAuth credentials configured by the app administrator.",
+      authorization_denied: "Google authorization was cancelled.",
+      session_expired: "Your Movie Shorts session expired. Sign in and connect again.",
+      invalid_callback: "Google returned an incomplete authorization response. Please connect again.",
+      connection_failed: "YouTube could not be connected. Please try again.",
+      connect_failed: "Could not start the YouTube connection. Please try again.",
+      service_unavailable: "The YouTube connection service is temporarily unavailable.",
+    };
+    if (code) setError(messages[code] || "YouTube connection failed.");
+  }, [refresh]);
 
   const disconnect = async () => {
     setBusy(true);
