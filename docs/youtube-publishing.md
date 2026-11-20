@@ -7,11 +7,12 @@ Movie Shorts uses Google's server-side OAuth 2.0 flow. A user signs in on Google
 1. Open a Google Cloud project that you control.
 2. Enable **YouTube Data API v3** for the project.
 3. Configure the OAuth consent screen and add the accounts that are allowed to test the app while it is in testing mode.
-4. Create an OAuth 2.0 Client ID with application type **Web application**.
-5. Add the exact callback URL to **Authorized redirect URIs**:
+4. In the OAuth Data Access settings, add the two scopes requested by Movie Shorts: `https://www.googleapis.com/auth/youtube.upload` and `https://www.googleapis.com/auth/youtube.readonly`.
+5. Create an OAuth 2.0 Client ID with application type **Web application**.
+6. Add the exact callback URL to **Authorized redirect URIs**:
    - Local development: http://localhost:3107/api/youtube/callback
    - Production: https://YOUR_APP_DOMAIN/api/youtube/callback
-6. Copy the OAuth client ID and client secret. Keep the secret private.
+7. Copy the OAuth client ID and client secret. Keep the secret private.
 
 **Testing mode note:** When the OAuth consent screen is External and its publishing status is Testing, add the Google account you will connect as a test user. Google states that test-user authorizations expire after seven days when non-basic scopes such as YouTube access are requested; the refresh token expires too. For ongoing use beyond testing, complete the OAuth app publishing and verification steps required for the requested scopes. See [Google's test-user guidance](https://support.google.com/cloud/answer/15549945) and [production readiness guidance](https://developers.google.com/identity/protocols/oauth2/production-readiness/overview).
 
