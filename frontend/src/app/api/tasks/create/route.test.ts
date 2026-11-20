@@ -58,6 +58,7 @@ describe("/api/tasks/create", () => {
 
     const payload = {
       source: { url: "https://www.youtube.com/watch?v=demo" },
+      rights_confirmed: true,
     };
 
     const response = await POST(
