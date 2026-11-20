@@ -156,6 +156,9 @@ CREATE TABLE tasks (
     workflow_options JSONB NOT NULL DEFAULT '{}'::jsonb,
     workflow_plan JSONB,
 
+    -- Dynamic edits: EditStyle.to_json(), non-default keys only. NULL = off
+    edit_style JSONB,
+
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -187,6 +190,9 @@ CREATE TABLE generated_clips (
     workflow_role VARCHAR(20),
     part_number INTEGER,
     workflow_meta JSONB NOT NULL DEFAULT '{}'::jsonb,
+
+    -- Dynamic edits summary {fx_level, timing, intensity, template}. NULL = legacy clip
+    fx_meta JSONB,
 
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -417,6 +423,15 @@ VALUES (
     false,
     false,
     false
+);
+-- Dynamic edits stay off on web and iOS until rollout. Admins bypass the flag.
+INSERT INTO feature_flags (key, description, web_enabled, ios_enabled, admins_bypass)
+VALUES (
+    'dynamic_edits',
+    'Edit intensity, SFX, music and animated caption styles',
+    false,
+    false,
+    true
 );
 
 CREATE INDEX idx_api_keys_user_id ON api_keys(user_id);
