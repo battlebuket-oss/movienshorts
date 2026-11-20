@@ -47,6 +47,7 @@ class YouTubeUploadRequest(BaseModel):
     title: str = Field(min_length=1, max_length=100)
     description: str = Field(default="", max_length=5000)
     privacy_status: Literal["private", "unlisted", "public"] = "private"
+    rights_confirmed: bool = False
 
 
 def build_oauth_url(client_id: str, redirect_uri: str, state: str) -> str:
@@ -62,6 +63,14 @@ def build_oauth_url(client_id: str, redirect_uri: str, state: str) -> str:
         "state": state,
     }
     return f"{AUTHORIZATION_ENDPOINT}?{urlencode(params)}"
+
+
+def _require_upload_rights_confirmation(confirmed: bool) -> None:
+    if confirmed is not True:
+        raise HTTPException(
+            status_code=403,
+            detail="Confirm that you own this video or have permission from the rights holder to publish it.",
+        )
 
 
 def _validate_upload_metadata(title: str, description: str, privacy_status: str) -> None:
@@ -337,6 +346,7 @@ async def upload_clip_to_youtube(
     user_id = await _get_user_id(request, db)
     config = _oauth_config()
     _validate_upload_metadata(payload.title, payload.description, payload.privacy_status)
+    _require_upload_rights_confirmation(payload.rights_confirmed)
 
     clip_result = await db.execute(
         text(
