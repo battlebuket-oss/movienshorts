@@ -14,7 +14,7 @@ from urllib.parse import urlencode
 import aiofiles
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StrictBool
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -49,7 +49,7 @@ class YouTubeUploadRequest(BaseModel):
     title: str = Field(min_length=1, max_length=100)
     description: str = Field(default="", max_length=5000)
     privacy_status: Literal["private", "unlisted", "public"] = "private"
-    rights_confirmed: bool = False
+    rights_confirmed: StrictBool = False
 
 
 def build_oauth_url(client_id: str, redirect_uri: str, state: str) -> str:
