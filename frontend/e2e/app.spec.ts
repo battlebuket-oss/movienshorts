@@ -135,5 +135,5 @@ test("user can confirm rights and upload a generated clip to a connected YouTube
   await page.goto("/settings");
   await expect(page.getByText("Connected to")).toContainText("Movie Shorts E2E Channel");
   await page.getByRole("button", { name: /disconnect/i }).click();
-  await expect(page.getByRole("button", { name: /connect youtube/i })).toBeVisible();
+  await expect(page.getByRole("link", { name: /connect youtube/i })).toBeVisible();
 });
