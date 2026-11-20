@@ -15,6 +15,7 @@ import { signOut, useSession } from "@/lib/auth-client";
 import { formatBillingPlanName, getPublicBillingPlans, isPaidBillingPlan, type BillingPlanId } from "@/lib/billing-plans";
 import { track } from "@/lib/datafast";
 import Link from "next/link";
+import YoutubeChannelConnect from "@/components/youtube-channel-connect";
 import { Type, Palette, CheckCircle, AlertCircle, Settings, ArrowLeft, Mail, KeyRound, ChevronRight } from "lucide-react";
 
 interface UserPreferences {
@@ -311,6 +312,8 @@ export default function SettingsPage() {
               Configure your default preferences for video clip generation
             </p>
           </div>
+
+          <YoutubeChannelConnect returnTo="/settings" />
 
           <Separator className="my-8" />
 
