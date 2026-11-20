@@ -24,14 +24,23 @@ export default function YoutubePublishButton({ clipId, defaultTitle, returnTo }:
 
   useEffect(() => {
     let active = true;
-    fetch("/api/youtube/status", { cache: "no-store" })
-      .then(async (response) => {
+    const refreshConnection = async () => {
+      try {
+        const response = await fetch("/api/youtube/status", { cache: "no-store" });
         if (!response.ok) throw new Error("Could not check your YouTube connection.");
         const result = await response.json();
         if (active) setConnected(Boolean(result.connected));
-      })
-      .catch(() => { if (active) setConnected(false); });
-    return () => { active = false; };
+      } catch {
+        if (active) setConnected(false);
+      }
+    };
+    const onConnectionChanged = () => { void refreshConnection(); };
+    void refreshConnection();
+    window.addEventListener("movie-shorts-youtube-connection-changed", onConnectionChanged);
+    return () => {
+      active = false;
+      window.removeEventListener("movie-shorts-youtube-connection-changed", onConnectionChanged);
+    };
   }, []);
 
   const upload = async () => {
