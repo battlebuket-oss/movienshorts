@@ -22,6 +22,7 @@ import { ArrowRight, Youtube, CheckCircle, AlertCircle, Loader2, Palette, Type, 
 import { Switch } from "@/components/ui/switch";
 import LandingPage from "@/components/landing-page";
 import { isLandingOnlyModeEnabled } from "@/lib/app-flags";
+import { CREATOR_PRESETS, getCreatorPreset, type CreatorPresetId } from "@/lib/creator-presets";
 
 interface LatestTask {
   id: string;
@@ -190,6 +191,8 @@ export default function Home() {
   const [statusMessage, setStatusMessage] = useState("");
   const [currentStep, setCurrentStep] = useState("");
   const [sourceType, setSourceType] = useState<"youtube" | "upload">("youtube");
+  const [creatorPresetId, setCreatorPresetId] = useState<CreatorPresetId>("general");
+  const [sourceRightsConfirmed, setSourceRightsConfirmed] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sourceTitle, setSourceTitle] = useState<string | null>(null);
@@ -404,6 +407,13 @@ export default function Home() {
     }
   };
 
+  const handleCreatorPresetChange = (presetId: CreatorPresetId) => {
+    setCreatorPresetId(presetId);
+    const preset = getCreatorPreset(presetId);
+    setFontSize(preset.fontSize);
+    setFontColor(preset.fontColor);
+  };
+
   const handleFontUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = "";
@@ -493,6 +503,10 @@ export default function Home() {
     if (sourceType === "upload" && !fileRef.current) return;
     if (sourceType === "youtube" && !url.trim()) return;
     if (!session?.user?.id) return;
+    if (!sourceRightsConfirmed) {
+      setError("Confirm that you own this video or have permission from the rights holder to process and publish clips.");
+      return;
+    }
     if (generationRequiresUpgrade) {
       setError(generationGateMessage);
       return;
@@ -621,12 +635,12 @@ export default function Home() {
             <div className="flex items-center gap-3">
               <Image
                 src="/logo.png"
-                alt="SupoClip"
+                alt="Movie Shorts"
                 width={24}
                 height={24}
                 className="rounded-lg"
               />
-              <h1 className="text-xl font-bold text-black">SupoClip</h1>
+              <h1 className="text-xl font-bold text-black">Movie Shorts</h1>
             </div>
 
             {/* Desktop nav */}
@@ -889,7 +903,7 @@ export default function Home() {
           <div className="flex-1 min-w-0">
             <div className="mb-8">
               <h2 className="text-2xl font-bold text-stone-900 mb-2">
-                Create New Clip
+                Create New Short
               </h2>
               <p className="text-stone-500">
                 {generationRequiresUpgrade
@@ -904,7 +918,7 @@ export default function Home() {
                   <AlertCircle className="h-4 w-4 text-amber-600" />
                   <AlertDescription className="text-sm text-amber-900">
                     <span className="font-medium">{generationGateMessage}</span>{" "}
-                    Free accounts can browse SupoClip, but video generation requires a paid plan.
+                    Free accounts can browse Movie Shorts, but video generation requires a paid plan.
                     <Link href="/settings" className="ml-1 font-semibold underline underline-offset-2">
                       Upgrade in settings
                     </Link>.
@@ -948,6 +962,33 @@ export default function Home() {
                   </button>
                 </div>
 
+                {/* Creator focus presets */}
+                <div className="rounded-xl border border-stone-200 bg-stone-50/70 p-4 space-y-2">
+                  <label className="text-sm font-medium text-stone-800">
+                    Creator focus
+                  </label>
+                  <Select
+                    value={creatorPresetId}
+                    onValueChange={(value) => handleCreatorPresetChange(value as CreatorPresetId)}
+                    disabled={generationControlsDisabled}
+                  >
+                    <SelectTrigger className="w-full h-11 bg-white">
+                      <SelectValue placeholder="Choose a creator preset" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CREATOR_PRESETS.map((preset) => (
+                        <SelectItem key={preset.id} value={preset.id}>
+                          <span className="font-medium">{preset.name}</span>
+                          <span className="ml-2 text-xs text-stone-500">{preset.description}</span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs leading-relaxed text-stone-500">
+                    Presets only set a starting caption size and colour. They are unofficial and are not affiliated with or endorsed by these creators.
+                  </p>
+                </div>
+
                 {/* URL / Upload Input */}
                 {sourceType === "youtube" ? (
                   <div className="relative">
@@ -982,7 +1023,7 @@ export default function Home() {
                     ) : (
                       <>
                         <p className="text-sm font-medium text-stone-700">Drop a video file here or click to browse</p>
-                        <p className="text-xs text-stone-400 mt-1">MP4, MOV, AVI up to 500MB</p>
+                        <p className="text-xs text-stone-400 mt-1">MP4, MOV, AVI up to 1GB</p>
                       </>
                     )}
                   </div>
@@ -1358,6 +1399,18 @@ export default function Home() {
                 </Alert>
               )}
 
+              <label className="flex items-start gap-3 rounded-xl border border-stone-200 bg-stone-50 p-3.5">
+                <input
+                  type="checkbox"
+                  checked={sourceRightsConfirmed}
+                  onChange={(event) => setSourceRightsConfirmed(event.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-stone-300 accent-stone-900"
+                />
+                <span className="text-xs leading-relaxed text-stone-600">
+                  I own this video or have permission from the rights holder to download, edit, and publish clips from it.
+                </span>
+              </label>
+
               <p className="text-xs text-stone-500">
                 Completion emails use your user preference in{" "}
                 <Link href="/settings" className="font-medium text-stone-700 underline underline-offset-2">
@@ -1372,7 +1425,8 @@ export default function Home() {
                   (sourceType === "youtube" && !url.trim()) ||
                   (sourceType === "upload" && !fileRef.current) ||
                   generationRequiresUpgrade ||
-                  isLoading
+                  isLoading ||
+                  !sourceRightsConfirmed
                 }
               >
                 {isLoading ? "Processing..." : generationRequiresUpgrade ? "Choose a Paid Plan" : "Process Video"}
