@@ -13,6 +13,8 @@ Movie Shorts uses Google's server-side OAuth 2.0 flow. A user signs in on Google
    - Production: https://YOUR_APP_DOMAIN/api/youtube/callback
 6. Copy the OAuth client ID and client secret. Keep the secret private.
 
+**Testing mode note:** When the OAuth consent screen is External and its publishing status is Testing, add the Google account you will connect as a test user. Google states that test-user authorizations expire after seven days when non-basic scopes such as YouTube access are requested; the refresh token expires too. For ongoing use beyond testing, complete the OAuth app publishing and verification steps required for the requested scopes. See [Google's test-user guidance](https://support.google.com/cloud/answer/15549945) and [production readiness guidance](https://developers.google.com/identity/protocols/oauth2/production-readiness/overview).
+
 Google's current authorization and API setup guides:
 - [YouTube Data API authorization](https://developers.google.com/youtube/data/guides/authentication)
 - [OAuth 2.0 for web server applications](https://developers.google.com/identity/protocols/oauth2/web-server)
