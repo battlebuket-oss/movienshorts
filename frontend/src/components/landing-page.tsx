@@ -31,7 +31,7 @@ import {
 import { isLandingOnlyModeEnabled } from "@/lib/app-flags";
 import { getPublicBillingPlans } from "@/lib/billing-plans";
 
-const HOSTED_APP_URL = "https://supoclip.com";
+const HOSTED_APP_URL = "https://github.com/battlebuket-oss/movienshorts";
 
 function ScrollReveal({
   children,
@@ -130,7 +130,7 @@ function getPlans() {
         "Full source code access",
       ],
       cta: "View on GitHub",
-      ctaHref: "https://github.com/FujiwaraChoki/supoclip",
+      ctaHref: "https://github.com/battlebuket-oss/movienshorts",
       highlighted: false,
     },
     ...getPublicBillingPlans().map((plan) => ({
@@ -202,7 +202,7 @@ export default function LandingPage() {
           <Link href="/" className="flex items-center gap-2.5 group">
             <Image
               src="/logo.png"
-              alt="SupoClip"
+              alt="Movie Shorts"
               width={24}
               height={24}
               className="rounded-lg transition-transform group-hover:scale-105"
@@ -214,7 +214,7 @@ export default function LandingPage() {
                   "var(--font-syne), var(--font-geist-sans), system-ui",
               }}
             >
-              SupoClip
+              Movie Shorts
             </span>
           </Link>
 
@@ -261,7 +261,7 @@ export default function LandingPage() {
             ) : (
               <a href={HOSTED_APP_URL} target="_blank" rel="noopener noreferrer">
                 <Button size="sm">
-                  Open Hosted App
+                  View on GitHub
                   <ExternalLink className="w-3.5 h-3.5" />
                 </Button>
               </a>
@@ -328,7 +328,7 @@ export default function LandingPage() {
                 ) : (
                   <a href={HOSTED_APP_URL} target="_blank" rel="noopener noreferrer">
                     <Button size="sm" className="w-full">
-                      Open Hosted App
+                      View on GitHub
                       <ExternalLink className="w-3.5 h-3.5" />
                     </Button>
                   </a>
@@ -404,13 +404,13 @@ export default function LandingPage() {
                 ) : (
                   <a href={HOSTED_APP_URL} target="_blank" rel="noopener noreferrer">
                     <Button size="lg" className="px-8 h-12 text-sm">
-                      Use Hosted App
+                      View on GitHub
                       <ExternalLink className="w-4 h-4" />
                     </Button>
                   </a>
                 )}
                 <a
-                  href="https://github.com/FujiwaraChoki/supoclip"
+                  href="https://github.com/battlebuket-oss/movienshorts"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -709,7 +709,7 @@ export default function LandingPage() {
                           variant={plan.highlighted ? "secondary" : "default"}
                           size="lg"
                         >
-                          Use Hosted App
+                          View on GitHub
                           <ExternalLink className="w-4 h-4" />
                         </Button>
                       </a>
@@ -722,7 +722,7 @@ export default function LandingPage() {
 
           <ScrollReveal delay={0.3}>
             <p className="text-center text-xs text-muted-foreground mt-10 max-w-md mx-auto">
-              Self-hosting? All features are free and unlimited.{" "}
+              Self-hosting keeps the application under your control. AI, transcription, storage, and server providers may still charge their own fees.{" "}
               <a
                 href="#open-source"
                 className="underline underline-offset-2 hover:text-foreground transition-colors"
@@ -768,7 +768,7 @@ export default function LandingPage() {
                     <span className="opacity-50">$</span>{" "}
                     git clone{" "}
                     <span className="opacity-40">
-                      https://github.com/FujiwaraChoki/supoclip
+                      https://github.com/battlebuket-oss/movienshorts
                     </span>
                   </div>
                   <div>
@@ -784,7 +784,7 @@ export default function LandingPage() {
 
                 <div className="flex flex-wrap gap-3 mt-6">
                   <a
-                    href="https://github.com/FujiwaraChoki/supoclip"
+                    href="https://github.com/battlebuket-oss/movienshorts"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -797,14 +797,14 @@ export default function LandingPage() {
                   {authEnabled ? (
                     <Link href="/sign-up">
                       <Button variant="outline">
-                        Try the hosted version
+                        Create your account
                         <ArrowRight className="w-4 h-4" />
                       </Button>
                     </Link>
                   ) : (
                     <a href={HOSTED_APP_URL} target="_blank" rel="noopener noreferrer">
                       <Button variant="outline">
-                        Open hosted version
+                        View project on GitHub
                         <ExternalLink className="w-4 h-4" />
                       </Button>
                     </a>
@@ -841,7 +841,7 @@ export default function LandingPage() {
           ) : (
             <a href={HOSTED_APP_URL} target="_blank" rel="noopener noreferrer">
               <Button size="lg" className="px-10 h-12 text-sm">
-                Open Hosted App
+                View on GitHub
                 <ExternalLink className="w-4 h-4" />
               </Button>
             </a>
@@ -856,7 +856,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-2">
             <Image
               src="/logo.png"
-              alt="SupoClip"
+              alt="Movie Shorts"
               width={24}
               height={24}
               className="rounded-md"
@@ -865,12 +865,12 @@ export default function LandingPage() {
               className="text-sm font-semibold"
               style={{ fontFamily: "var(--font-syne), system-ui" }}
             >
-              SupoClip
+              Movie Shorts
             </span>
           </div>
           <div className="flex items-center gap-6 text-xs text-muted-foreground">
             <a
-              href="https://github.com/FujiwaraChoki/supoclip"
+              href="https://github.com/battlebuket-oss/movienshorts"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-foreground transition-colors"
