@@ -59,6 +59,13 @@ The integration requests only:
 
 The current uploader accepts a generated MP4 clip up to 500 MB. It sends the selected clip through YouTube's resumable upload endpoint. A successful response includes a link to the uploaded video.
 
-Google may require OAuth app verification or additional review before an application can be used broadly outside its configured test users. YouTube API quota, channel standing, upload limits, and Google's own processing checks still apply. An API project subject to YouTube's unverified-project upload restrictions may have uploaded videos forced to Private regardless of the chosen visibility.
+Google OAuth publishing status affects who can authorize the app and how long refresh tokens last. An External app left in Testing is limited to listed test users, and refresh tokens for YouTube scopes expire after seven days. For broader use, publish the OAuth consent screen and complete any verification Google requires for the requested scopes. YouTube API quota, channel standing, file-size limits, and video processing checks still apply. Current YouTube `videos.insert` documentation states that uploads from unverified API projects are not restricted to Private visibility; an October 2026 YouTube API issue-tracker clarification confirms that the earlier private-only restriction was lifted.
 
 **Content rights:** Upload only content you own or are authorized by the rights holder to publish. Connecting a channel does not grant rights to third-party footage, music, or livestreams.
+
+
+Current policy references:
+- [YouTube videos.insert API](https://developers.google.com/youtube/data/reference/rest/v3/videos/insert)
+- [Google OAuth refresh-token expiration](https://developers.google.com/identity/protocols/oauth2)
+- [Google OAuth app publishing states](https://developers.google.com/identity/protocols/oauth2/production-readiness/overview)
+- [YouTube API clarification on the former private-only upload restriction](https://issuetracker.google.com/issues/572863050)
