@@ -96,6 +96,14 @@ test("user can confirm rights and upload a generated clip to a connected YouTube
     });
   });
 
+  await page.route("**/api/youtube/disconnect", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ connected: false }),
+    });
+  });
+
   await signIn(page, seed.regular.email, seed.regular.password);
   await page.goto(`/tasks/${seed.completedTaskId}`);
 
@@ -123,4 +131,9 @@ test("user can confirm rights and upload a generated clip to a connected YouTube
   });
   expect(uploadPayloads[0].clip_id).toBeTruthy();
   expect(uploadPayloads[0].title).toBeTruthy();
+
+  await page.goto("/settings");
+  await expect(page.getByText("Connected to")).toContainText("Movie Shorts E2E Channel");
+  await page.getByRole("button", { name: /disconnect/i }).click();
+  await expect(page.getByRole("button", { name: /connect youtube/i })).toBeVisible();
 });
