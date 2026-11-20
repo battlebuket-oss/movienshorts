@@ -80,6 +80,10 @@ docker compose --env-file .env.production -f docker-compose.production.yml ps
 
 Read [docs/production-deployment.md](docs/production-deployment.md) before exposing the application publicly. The production Compose file is a deployment baseline, not a claim that a live deployment, load test, security audit, or backup restore has already been completed.
 
+## YouTube channel publishing
+
+Movie Shorts can connect a YouTube channel through Google OAuth and upload selected generated MP4 clips. The connection stores an encrypted refresh token per user, and each upload requires an explicit confirmation. Visibility defaults to **Private**. Configure a Google Cloud OAuth Web client and the YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET, and YOUTUBE_OAUTH_REDIRECT_URI server environment variables before using it. Follow [docs/youtube-publishing.md](docs/youtube-publishing.md) for the exact setup and callback URI.
+
 ## Tests
 
 The repository uses pytest for the backend, Vitest for frontend unit tests, and Playwright for browser smoke tests. CI also builds the frontend for production and validates the production Compose configuration.
