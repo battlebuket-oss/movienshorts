@@ -185,12 +185,8 @@ def _validate_upload_metadata(title: str, description: str, privacy_status: str)
     normalized_title = title.strip()
     if len(normalized_title) > 100:
         raise HTTPException(status_code=422, detail="YouTube titles must be 100 characters or fewer.")
-    if "<" in normalized_title or ">" in normalized_title:
-        raise HTTPException(status_code=422, detail="YouTube titles cannot contain angle brackets.")
-    if len(description.encode("utf-8")) > 5000:
-        raise HTTPException(status_code=422, detail="YouTube descriptions must be 5,000 UTF-8 bytes or fewer.")
-    if "<" in description or ">" in description:
-        raise HTTPException(status_code=422, detail="YouTube descriptions cannot contain angle brackets.")
+    if len(description) > 5000:
+        raise HTTPException(status_code=422, detail="YouTube descriptions must be 5,000 characters or fewer.")
     if privacy_status not in {"private", "unlisted", "public"}:
         raise HTTPException(status_code=422, detail="Choose private, unlisted, or public visibility.")
 
