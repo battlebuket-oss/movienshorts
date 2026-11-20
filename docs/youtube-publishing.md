@@ -1,0 +1,61 @@
+# YouTube channel connection and publishing
+
+Movie Shorts uses Google's server-side OAuth 2.0 flow. A user signs in on Google's consent screen; Movie Shorts never asks for or stores the user's Google password. The refresh token is encrypted in the Movie Shorts database and is scoped to that Movie Shorts user.
+
+## 1. Configure Google Cloud
+
+1. Open a Google Cloud project that you control.
+2. Enable **YouTube Data API v3** for the project.
+3. Configure the OAuth consent screen and add the accounts that are allowed to test the app while it is in testing mode.
+4. Create an OAuth 2.0 Client ID with application type **Web application**.
+5. Add the exact callback URL to **Authorized redirect URIs**:
+   - Local development: http://localhost:3107/api/youtube/callback
+   - Production: https://YOUR_APP_DOMAIN/api/youtube/callback
+6. Copy the OAuth client ID and client secret. Keep the secret private.
+
+Google's current authorization and API setup guides:
+- [YouTube Data API authorization](https://developers.google.com/youtube/data/guides/authentication)
+- [OAuth 2.0 for web server applications](https://developers.google.com/identity/protocols/oauth2/web-server)
+- [YouTube video uploads](https://developers.google.com/youtube/data/guides/uploading_a_video)
+
+## 2. Configure Movie Shorts
+
+For local Docker development, add the following to the untracked .env file:
+
+    YOUTUBE_CLIENT_ID=your-web-client-id
+    YOUTUBE_CLIENT_SECRET=your-web-client-secret
+    YOUTUBE_OAUTH_REDIRECT_URI=http://localhost:3107/api/youtube/callback
+    APP_SETTINGS_ENCRYPTION_KEY=use-a-long-random-secret
+
+For production, set the same variables in the private .env.production file or your hosting provider's secret manager. Set YOUTUBE_OAUTH_REDIRECT_URI to the exact HTTPS callback registered in Google Cloud. Do not use a NEXT_PUBLIC_ prefix for the client secret. Never commit either secret to Git.
+
+The app uses the existing APP_SETTINGS_ENCRYPTION_KEY to encrypt refresh tokens at rest. Keep this key backed up securely: changing it without re-encrypting stored tokens will make existing channel connections unreadable, and users will need to reconnect.
+
+Restart the backend after changing environment values:
+
+    docker compose up -d --build backend
+
+For production, use the production Compose file and its environment file as described in [production deployment](production-deployment.md).
+
+## 3. Connect and upload
+
+1. Sign in to Movie Shorts.
+2. Open a completed task and find the **YouTube channel** panel.
+3. Select **Connect YouTube** and choose the Google account that owns the intended YouTube channel.
+4. Review the requested channel permissions and approve them.
+5. Movie Shorts displays the connected channel name.
+6. On a generated clip, select **Upload to YouTube**, edit the title/description, choose visibility, and explicitly confirm the upload.
+
+Visibility defaults to **Private**. Unlisted or Public uploads require selecting that setting deliberately. Movie Shorts does not publish clips automatically. You can disconnect the channel from the channel panel; Movie Shorts deletes its local token and requests revocation from Google.
+
+## Permissions and limits
+
+The integration requests only:
+- youtube.upload to upload videos to the authorized channel.
+- youtube.readonly to identify and display the channel associated with the Google account.
+
+The current uploader accepts a generated MP4 clip up to 500 MB. It sends the selected clip through YouTube's resumable upload endpoint. A successful response includes a link to the uploaded video.
+
+Google may require OAuth app verification or additional review before an application can be used broadly outside its configured test users. YouTube API quota, channel standing, upload limits, and Google's own processing checks still apply. An API project subject to YouTube's unverified-project upload restrictions may have uploaded videos forced to Private regardless of the chosen visibility.
+
+**Content rights:** Upload only content you own or are authorized by the rights holder to publish. Connecting a channel does not grant rights to third-party footage, music, or livestreams.
