@@ -63,6 +63,7 @@ export default function YoutubePublishButton({ clipId, defaultTitle, returnTo }:
           title: title.trim(),
           description,
           privacy_status: privacy,
+          rights_confirmed: rightsConfirmed,
         }),
       });
       const result = await response.json();
