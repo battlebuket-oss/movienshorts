@@ -62,8 +62,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: "pnpm"
-          cache-dependency-path: frontend/pnpm-lock.yaml
       - name: Enable pinned pnpm
         run: corepack enable && corepack prepare pnpm@10.27.0 --activate
       - name: Install frontend dependencies
@@ -89,8 +87,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: "pnpm"
-          cache-dependency-path: frontend/pnpm-lock.yaml
       - name: Enable pinned pnpm
         run: corepack enable && corepack prepare pnpm@10.27.0 --activate
       - name: Install frontend dependencies
@@ -163,8 +159,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: "pnpm"
-          cache-dependency-path: frontend/pnpm-lock.yaml
       - name: Install backend dependencies
         run: cd backend && uv sync --all-groups
       - name: Enable pinned pnpm
