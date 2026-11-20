@@ -57,6 +57,8 @@ import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
 import DynamicVideoPlayer from "@/components/dynamic-video-player";
 import { TranscriptPreview } from "@/components/transcript-preview";
+import YoutubeChannelConnect from "@/components/youtube-channel-connect";
+import YoutubePublishButton from "@/components/youtube-publish-button";
 
 interface Clip {
   id: string;
@@ -870,7 +872,7 @@ export default function TaskPage() {
                 <p className="text-sm text-neutral-500 text-center">
                   {clips.length} clip{clips.length !== 1 ? "s" : ""} ready
                 </p>
-                {clips.map((clip) => (
+            {clips.map((clip) => (
                   <Card key={clip.id} className="overflow-hidden">
                     <CardContent className="p-0">
                       <div className="flex flex-col lg:flex-row">
@@ -913,6 +915,11 @@ export default function TaskPage() {
                               Download
                             </a>
                           </Button>
+                          <YoutubePublishButton
+                            clipId={clip.id}
+                            defaultTitle={clip.hook_title || ("Clip " + clip.clip_order)}
+                            returnTo={"/tasks/" + params.id}
+                          />
                         </div>
                       </div>
                     </CardContent>
@@ -1154,6 +1161,8 @@ export default function TaskPage() {
               </SheetContent>
             </Sheet>
 
+            <YoutubeChannelConnect returnTo={"/tasks/" + params.id} />
+
             {clips.map((clip) => (
               <Card key={clip.id} className="overflow-hidden">
                 <CardContent className="p-0">
@@ -1306,6 +1315,12 @@ export default function TaskPage() {
                             </SelectContent>
                           </Select>
                         </div>
+
+                        <YoutubePublishButton
+                          clipId={clip.id}
+                          defaultTitle={clip.hook_title || ("Clip " + clip.clip_order)}
+                          returnTo={"/tasks/" + params.id}
+                        />
 
                         <Button
                           size="sm"

@@ -1,259 +1,117 @@
-# Fuck OpusClip.
+# Movie Shorts
 
-... because good video clips shouldn't come with ugly watermarks or platform lock-in.
+Movie Shorts is an AI-assisted video clipping application. It turns video files and supported YouTube URLs into short-form clips with transcription, segment selection, vertical reframing, captions, and export tools.
 
-<p align="center">
-  <a href="https://www.supoclip.com">
-    <img src="assets/banner.png" alt="SupoClip Banner" width="100%" />
-  </a>
-</p>
+Movie Shorts is a customized derivative of [SupoClip](https://github.com/FujiwaraChoki/supoclip). It retains the upstream project's AGPL-3.0 licensing; see [LICENSE](LICENSE) and the attribution section below.
 
-SupoClip gives you AI-powered video clipping capabilities in an open-source package you can run yourself, customize, and inspect. Use the hosted version when you want the convenience of managed infrastructure, or self-host when you want full control.
+## What it does
 
-> For the hosted version, sign up for the waitlist here: [SupoClip Hosted](https://www.supoclip.com)
+- Accepts a video file or supported YouTube URL, including standard watch, Shorts, embed, and live URLs.
+- Transcribes video and identifies candidate clip segments.
+- Creates short-form clips with vertical or alternative framing presets.
+- Adds editable captions, font choices, and cleanup options.
+- Queues video processing in a background worker and tracks task progress.
+- Includes unofficial caption starting presets for Kai Cenat, CarryMinati, and IShowSpeed. These presets only set initial caption styling; they are not affiliated with or endorsed by the creators.
 
-## Why SupoClip Exists
+**Content rights:** Only submit videos you own or are authorized by the rights holder to download, process, edit, and publish. The app requires an explicit confirmation in the UI and enforces that confirmation again at the task API.
 
-### The OpusClip Problem
+## Architecture
 
-OpusClip is undeniably powerful. It's an AI video clipping tool that can turn long-form content into viral short clips with features like:
+| Component | Technology | Purpose |
+| --- | --- | --- |
+| Frontend | Next.js, React, TypeScript | App UI, authentication, task dashboard |
+| Backend | FastAPI, Python | Uploads, task API, media processing |
+| Worker | ARQ, Redis | Background video jobs |
+| Database | PostgreSQL | Accounts, tasks, application data |
+| AI services | AssemblyAI and a configured LLM provider | Transcription and clip analysis |
 
-- AI-powered clip generation from long videos
-- Automated captions with 97%+ accuracy
-- Virality scoring to predict viral potential
-- Multi-language support (20+ languages)
-- Brand templates and customization
+## Development quick start
 
-**But here's the catch:**
+### Requirements
 
-- **Usage limits**: Processing minutes are capped by plan
-- **Watermarks**: Some exports can include platform branding
-- **Processing limits**: Even paid plans have strict minute limits
-- **Vendor lock-in**: Your content and workflows are tied to their platform
+- Docker Engine and Docker Compose.
+- An AssemblyAI API key for transcription.
+- An API key for one supported LLM provider, or a configured local Ollama instance.
 
-### The SupoClip Solution
+### Start the development stack
 
-SupoClip provides the same core functionality with more control:
-
-→ ✅ **Self-Hostable** - Run it on your own infrastructure
-
-→ ✅ **No Watermarks** - Your content stays yours
-
-→ ✅ **Open Source** - Full transparency, community-driven development
-
-→ ✅ **Hosted Option** - Use SupoClip without managing servers
-
-→ ✅ **Unlimited Usage** - Process as many videos as your hardware can handle
-
-→ ✅ **Customizable** - Modify and extend the codebase to fit your needs
-
-## Quick Start
-
-### Prerequisites
-
-- Docker and Docker Compose
-- An AssemblyAI API key (for transcription) - [Get one here](https://www.assemblyai.com/)
-- An LLM provider for AI analysis - OpenAI, Google, Anthropic, or Ollama
-
-### 1. Clone and Configure
+From the repository root:
 
 ```bash
-git clone https://github.com/FujiwaraChoki/supoclip.git
-cd supoclip
+cp .env.example .env
 ```
 
-Create a `.env` file in the root directory:
-
-```env
-# Required: Video transcription
-ASSEMBLY_AI_API_KEY=your_assemblyai_api_key
-
-# Required: Choose ONE LLM provider and set its API key
-# Option A: Google Gemini (recommended - fast & cost-effective)
-LLM=google-gla:gemini-3-flash-preview
-GOOGLE_API_KEY=your_google_api_key
-
-# Option B: OpenAI GPT-5.2 (best reasoning)
-# LLM=openai:gpt-5.2
-# OPENAI_API_KEY=your_openai_api_key
-
-# Option C: Anthropic Claude
-# LLM=anthropic:claude-4-sonnet
-# ANTHROPIC_API_KEY=your_anthropic_api_key
-
-# Option D: Ollama (local/self-hosted)
-# LLM=ollama:gpt-oss:20b
-# OLLAMA_BASE_URL=  # Optional; defaults to localhost locally, host.docker.internal in Docker
-# OLLAMA_API_KEY=your_ollama_api_key  # Optional (Ollama Cloud)
-
-# Optional: Auth secret (change in production)
-BETTER_AUTH_SECRET=change_this_in_production
-
-# Optional: DataFast analytics
-# Track your deployed domain in DataFast
-# NEXT_PUBLIC_DATAFAST_WEBSITE_ID=dfid_xxxxx
-# NEXT_PUBLIC_DATAFAST_DOMAIN=your-domain.com
-# NEXT_PUBLIC_DATAFAST_ALLOW_LOCALHOST=false
-
-# Optional: Amazon SES for waitlist confirmation emails
-# AWS_REGION=us-east-1
-# AWS_ACCESS_KEY_ID=your_aws_access_key_id
-# AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key
-# SES_FROM_EMAIL="SupoClip <onboarding@example.com>"
-
-# Optional: YouTube metadata provider
-# `yt_dlp` preserves the existing metadata behavior
-# `youtube_data_api` uses the official API first, then falls back to yt-dlp
-# YOUTUBE_METADATA_PROVIDER=yt_dlp
-# YOUTUBE_DATA_API_KEY=your_youtube_data_api_key
-```
-
-### 2. Start the Services
+Set `ASSEMBLY_AI_API_KEY`, choose an `LLM` provider, and set the matching provider key in `.env`. Then run:
 
 ```bash
-docker-compose up -d
+docker compose up -d --build
+docker compose ps
+docker compose logs -f
 ```
 
-This starts:
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:8000 (docs at /docs)
-- **PostgreSQL**: localhost:5432
-- **Redis**: localhost:6379
+Open the application at **http://localhost:3107**. The backend health endpoint is **http://localhost:8000/health**. PostgreSQL and Redis are internal services in the Compose network.
 
-### 3. Wait for Initialization
-
-First-time startup takes a few minutes. Check progress with:
+### Frontend development without Docker
 
 ```bash
-docker-compose logs -f
+cd frontend
+corepack enable
+corepack prepare pnpm@10.27.0 --activate
+pnpm install --frozen-lockfile
+pnpm run dev
 ```
 
-Wait until you see health checks passing for all services.
+The frontend requires a running backend and PostgreSQL/Redis stack for the full application workflow.
 
-### 4. Access the App
+## Production deployment
 
-Open http://localhost:3000 in your browser, create an account, and start clipping!
+A separate production Compose file is provided. It binds the app and API to host loopback addresses, does not publish PostgreSQL or Redis ports, and expects real secrets and external HTTPS reverse-proxy configuration.
 
-If you enable DataFast, also verify that:
-- `/js/script.js` loads from your own app domain
-- `/api/events` requests are proxied through your app domain
-- custom goals appear after successful sign-up, sign-in, task creation, billing, feedback, or waitlist actions
-
-### Troubleshooting
-
-**Backend fails to start with API key error:**
-- Make sure you've set the correct LLM provider AND its corresponding API key in `.env`
-- Default is `google-gla:gemini-3-flash-preview` which requires `GOOGLE_API_KEY`
-- If using `openai:gpt-5.2`, you MUST set `OPENAI_API_KEY`
-- If using `ollama:*`, run Ollama and optionally set `OLLAMA_BASE_URL`
-  (`http://localhost:11434/v1` for local backend runs, `http://host.docker.internal:11434/v1` for Docker)
-- Rebuild after changing `.env`: `docker-compose up -d --build`
-
-**Videos stay queued / never process:**
-- Check worker logs: `docker-compose logs -f worker`
-- Ensure Redis is healthy: `docker-compose logs redis`
-- Verify API keys are correct
-
-**YouTube titles or duration lookup is failing:**
-- `YOUTUBE_METADATA_PROVIDER=yt_dlp` keeps the old metadata path
-- `YOUTUBE_METADATA_PROVIDER=youtube_data_api` requires YouTube Data API v3 enabled in Google Cloud
-- Prefer `YOUTUBE_DATA_API_KEY`; if it is unset, the backend will try `GOOGLE_API_KEY`
-- The backend will automatically fall back to the other metadata provider if the primary one fails
-- `videos.list` costs 1 quota unit per request
-
-**Performance tuning (default is fast mode):**
-- `DEFAULT_PROCESSING_MODE=fast|balanced|quality`
-- `FAST_MODE_MAX_CLIPS=4` to cap clip count in fast mode
-- `FAST_MODE_TRANSCRIPT_MODEL=nano` for fastest transcript model
-- View aggregate metrics: `GET /tasks/metrics/performance`
-
-**Prisma errors on Windows:**
-- Run `docker-compose down -v` to clear volumes
-- Run `docker-compose up -d --build` to rebuild
-
-**Frontend shows database errors:**
-- Wait for PostgreSQL to fully initialize (check logs)
-- The database is automatically created on first run
-
-**Font picker is empty / cannot select or upload fonts:**
-- Add fonts to `backend/fonts/` – see [backend/fonts/README.md](backend/fonts/README.md) for TikTok Sans and custom fonts
-- Ensure `BACKEND_AUTH_SECRET` is set in `.env` when using the hosted/monetized setup
-- Font upload is Pro-only when monetization is enabled; self-hosted users can upload freely
-
-**Subscription emails are not sending:**
-- Set `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `SES_FROM_EMAIL` in `.env`
-- `SES_FROM_EMAIL` must be a verified identity/domain in Amazon SES
-- The backend sends the “thank you for subscribing” email on `checkout.session.completed`
-- The backend sends the “sorry to see you go” email on `customer.subscription.deleted`
-
-## Testing
-
-SupoClip now has a layered automated test setup:
-
-- `pytest` for backend unit and integration tests
-- `Vitest` and Testing Library for frontend route and component coverage
-- `Playwright` for a small seeded browser smoke suite
-
-Repo-level entrypoints:
+1. Copy `.env.production.example` to `.env.production`.
+2. Generate independent production secrets and fill all required API credentials.
+3. Configure public HTTPS app/API URLs and an exact frontend origin in `CORS_ORIGINS`.
+4. Validate and start the stack:
 
 ```bash
-make test
-make test-backend
-make test-frontend
-make test-e2e
-make test-ci
+docker compose --env-file .env.production -f docker-compose.production.yml config --quiet
+docker compose --env-file .env.production -f docker-compose.production.yml up -d --build
+docker compose --env-file .env.production -f docker-compose.production.yml ps
 ```
 
-App-level entrypoints:
+Read [docs/production-deployment.md](docs/production-deployment.md) before exposing the application publicly. The production Compose file is a deployment baseline, not a claim that a live deployment, load test, security audit, or backup restore has already been completed.
+
+## YouTube channel publishing
+
+Movie Shorts can connect a YouTube channel through Google OAuth and upload selected generated MP4 clips. The connection stores an encrypted refresh token per user, and each upload requires an explicit confirmation. Visibility defaults to **Private**. Configure a Google Cloud OAuth Web client and the YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET, and YOUTUBE_OAUTH_REDIRECT_URI server environment variables before using it. Follow [docs/youtube-publishing.md](docs/youtube-publishing.md) for the exact setup and callback URI.
+
+## Tests
+
+The repository uses pytest for the backend, Vitest for frontend unit tests, and Playwright for browser smoke tests. CI also builds the frontend for production and validates the production Compose configuration.
 
 ```bash
-cd backend && uv sync --all-groups && .venv/bin/pytest
-cd frontend && npm install && npm run test:coverage
-cd frontend && npm run test:e2e
+# Backend
+cd backend
+uv sync --all-groups
+.venv/bin/pytest
+
+# Frontend unit tests
+cd ../frontend
+corepack enable
+corepack prepare pnpm@10.27.0 --activate
+pnpm install --frozen-lockfile
+pnpm run test:coverage
+
+# Playwright browser tests (after starting the required services)
+pnpm run test:e2e
+
+# Production frontend build
+pnpm run build
 ```
 
-Local test runs expect PostgreSQL and Redis to be available. The easiest path is to start the stack with `docker-compose up -d`, then run the commands above. CI runs the same layers in GitHub Actions with Postgres and Redis service containers.
+Backend tests require PostgreSQL and Redis. See [docs/](docs/README.md) for setup, configuration, architecture, API, and troubleshooting documentation.
 
-## Documentation
+## Upstream attribution and license
 
-Detailed documentation now lives in [`docs/`](docs/README.md).
+Movie Shorts is derived from [FujiwaraChoki/SupoClip](https://github.com/FujiwaraChoki/supoclip). Preserve upstream attribution and all AGPL-3.0 notices. If you modify and distribute this software or make it available as a network service, review and comply with the applicable AGPL-3.0 source-sharing requirements.
 
-Start with:
-
-- [`docs/setup.md`](docs/setup.md)
-- [`docs/configuration.md`](docs/configuration.md)
-- [`docs/app-guide.md`](docs/app-guide.md)
-- [`docs/architecture.md`](docs/architecture.md)
-- [`docs/api-reference.md`](docs/api-reference.md)
-- [`docs/development.md`](docs/development.md)
-- [`docs/troubleshooting.md`](docs/troubleshooting.md)
-
-## Hosted Billing Emails
-
-When you run SupoClip with monetization enabled (`SELF_HOST=false`), subscription lifecycle emails are sent through Amazon SES by the backend:
-
-- `checkout.session.completed` sends the thank-you-for-subscribing email
-- `customer.subscription.deleted` sends the sorry-to-see-you-go email
-
-Required env vars for this flow:
-
-- `AWS_REGION`
-- `AWS_ACCESS_KEY_ID`
-- `AWS_SECRET_ACCESS_KEY`
-- `SES_FROM_EMAIL`
-- `BACKEND_AUTH_SECRET`
-- `STRIPE_SECRET_KEY`
-- `STRIPE_WEBHOOK_SECRET`
-- `STRIPE_PRICE_ID`
-
-### Local Development (Without Docker)
-
-See [CLAUDE.md](CLAUDE.md) for detailed development instructions.
-
-## License
-
-SupoClip is released under the AGPL-3.0 License. See [LICENSE](LICENSE) for details.
-
-Contributions are accepted under the terms in [CONTRIBUTING.md](CONTRIBUTING.md),
-including a license grant that allows the project owner to sublicense and
-relicense contributed code.
+See [LICENSE](LICENSE) for the license text and [CONTRIBUTING.md](CONTRIBUTING.md) for contribution terms.

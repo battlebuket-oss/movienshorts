@@ -22,6 +22,8 @@ import { ArrowRight, Youtube, CheckCircle, AlertCircle, Loader2, Palette, Type, 
 import { Switch } from "@/components/ui/switch";
 import LandingPage from "@/components/landing-page";
 import { isLandingOnlyModeEnabled } from "@/lib/app-flags";
+import { CREATOR_PRESETS, getCreatorPreset, type CreatorPresetId } from "@/lib/creator-presets";
+import { getYouTubeThumbnailUrl } from "@/lib/youtube-video";
 
 interface LatestTask {
   id: string;
@@ -66,43 +68,6 @@ type ProxyUploadAuthorization = {
 };
 
 type UploadAuthorization = DirectUploadAuthorization | ProxyUploadAuthorization;
-
-const extractYouTubeVideoId = (value: string): string | null => {
-  const input = value.trim();
-  if (!input) return null;
-
-  try {
-    const parsed = new URL(input);
-    const host = parsed.hostname.replace(/^www\./, "");
-
-    if (host === "youtu.be") {
-      const id = parsed.pathname.split("/").filter(Boolean)[0];
-      return id && id.length === 11 ? id : null;
-    }
-
-    if (host === "youtube.com" || host === "m.youtube.com" || host === "music.youtube.com") {
-      const fromSearch = parsed.searchParams.get("v");
-      if (fromSearch && fromSearch.length === 11) {
-        return fromSearch;
-      }
-
-      const pathParts = parsed.pathname.split("/").filter(Boolean);
-      const embedId = pathParts[0] === "embed" ? pathParts[1] : null;
-      if (embedId && embedId.length === 11) {
-        return embedId;
-      }
-    }
-  } catch {
-    return null;
-  }
-
-  return null;
-};
-
-const getYouTubeThumbnailUrl = (value: string): string | null => {
-  const videoId = extractYouTubeVideoId(value);
-  return videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : null;
-};
 
 async function requestUploadAuthorization(): Promise<UploadAuthorization> {
   const response = await fetch("/api/upload/authorization", {
@@ -190,6 +155,8 @@ export default function Home() {
   const [statusMessage, setStatusMessage] = useState("");
   const [currentStep, setCurrentStep] = useState("");
   const [sourceType, setSourceType] = useState<"youtube" | "upload">("youtube");
+  const [creatorPresetId, setCreatorPresetId] = useState<CreatorPresetId>("general");
+  const [sourceRightsConfirmed, setSourceRightsConfirmed] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sourceTitle, setSourceTitle] = useState<string | null>(null);
@@ -383,6 +350,7 @@ export default function Home() {
     const file = e.target.files?.[0] || null;
     fileRef.current = file;
     setFileName(file ? file.name : null);
+    setSourceRightsConfirmed(false);
   };
 
   const handleTemplateChange = (templateId: string) => {
@@ -402,6 +370,13 @@ export default function Home() {
     if (selectedTemplate.font_color) {
       setFontColor(selectedTemplate.font_color);
     }
+  };
+
+  const handleCreatorPresetChange = (presetId: CreatorPresetId) => {
+    setCreatorPresetId(presetId);
+    const preset = getCreatorPreset(presetId);
+    setFontSize(preset.fontSize);
+    setFontColor(preset.fontColor);
   };
 
   const handleFontUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -493,6 +468,10 @@ export default function Home() {
     if (sourceType === "upload" && !fileRef.current) return;
     if (sourceType === "youtube" && !url.trim()) return;
     if (!session?.user?.id) return;
+    if (!sourceRightsConfirmed) {
+      setError("Confirm that you own this video or have permission from the rights holder to process and publish clips.");
+      return;
+    }
     if (generationRequiresUpgrade) {
       setError(generationGateMessage);
       return;
@@ -537,6 +516,7 @@ export default function Home() {
             url: videoUrl,
             title: null
           },
+          rights_confirmed: sourceRightsConfirmed,
           font_options: {
             font_family: fontFamily,
             font_size: fontSize,
@@ -587,6 +567,7 @@ export default function Home() {
       setProgress(0);
       setStatusMessage("");
       setCurrentStep("");
+      setSourceRightsConfirmed(false);
       setFileName(null);
       fileRef.current = null;
       setUrl("");
@@ -621,12 +602,12 @@ export default function Home() {
             <div className="flex items-center gap-3">
               <Image
                 src="/logo.png"
-                alt="SupoClip"
+                alt="Movie Shorts"
                 width={24}
                 height={24}
                 className="rounded-lg"
               />
-              <h1 className="text-xl font-bold text-black">SupoClip</h1>
+              <h1 className="text-xl font-bold text-black">Movie Shorts</h1>
             </div>
 
             {/* Desktop nav */}
@@ -889,7 +870,7 @@ export default function Home() {
           <div className="flex-1 min-w-0">
             <div className="mb-8">
               <h2 className="text-2xl font-bold text-stone-900 mb-2">
-                Create New Clip
+                Create New Short
               </h2>
               <p className="text-stone-500">
                 {generationRequiresUpgrade
@@ -904,7 +885,7 @@ export default function Home() {
                   <AlertCircle className="h-4 w-4 text-amber-600" />
                   <AlertDescription className="text-sm text-amber-900">
                     <span className="font-medium">{generationGateMessage}</span>{" "}
-                    Free accounts can browse SupoClip, but video generation requires a paid plan.
+                    Free accounts can browse Movie Shorts, but video generation requires a paid plan.
                     <Link href="/settings" className="ml-1 font-semibold underline underline-offset-2">
                       Upgrade in settings
                     </Link>.
@@ -919,6 +900,7 @@ export default function Home() {
                     type="button"
                     onClick={() => {
                       setSourceType("youtube");
+                      setSourceRightsConfirmed(false);
                       setFileName(null);
                       fileRef.current = null;
                       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -935,7 +917,7 @@ export default function Home() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setSourceType("upload")}
+                    onClick={() => { setSourceType("upload"); setSourceRightsConfirmed(false); }}
                     disabled={generationControlsDisabled}
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                       sourceType === "upload"
@@ -948,6 +930,33 @@ export default function Home() {
                   </button>
                 </div>
 
+                {/* Creator focus presets */}
+                <div className="rounded-xl border border-stone-200 bg-stone-50/70 p-4 space-y-2">
+                  <label className="text-sm font-medium text-stone-800">
+                    Creator focus
+                  </label>
+                  <Select
+                    value={creatorPresetId}
+                    onValueChange={(value) => handleCreatorPresetChange(value as CreatorPresetId)}
+                    disabled={generationControlsDisabled}
+                  >
+                    <SelectTrigger className="w-full h-11 bg-white">
+                      <SelectValue placeholder="Choose a creator preset" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CREATOR_PRESETS.map((preset) => (
+                        <SelectItem key={preset.id} value={preset.id}>
+                          <span className="font-medium">{preset.name}</span>
+                          <span className="ml-2 text-xs text-stone-500">{preset.description}</span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs leading-relaxed text-stone-500">
+                    Presets only set a starting caption size and colour. They are unofficial and are not affiliated with or endorsed by these creators.
+                  </p>
+                </div>
+
                 {/* URL / Upload Input */}
                 {sourceType === "youtube" ? (
                   <div className="relative">
@@ -957,7 +966,7 @@ export default function Home() {
                       type="url"
                       placeholder="https://www.youtube.com/watch?v=..."
                       value={url}
-                      onChange={(e) => setUrl(e.target.value)}
+                      onChange={(e) => { setUrl(e.target.value); setSourceRightsConfirmed(false); }}
                       disabled={generationControlsDisabled}
                       className="h-14 pl-12 text-base rounded-xl border-stone-300 focus:border-stone-500 placeholder:text-stone-400"
                     />
@@ -982,7 +991,7 @@ export default function Home() {
                     ) : (
                       <>
                         <p className="text-sm font-medium text-stone-700">Drop a video file here or click to browse</p>
-                        <p className="text-xs text-stone-400 mt-1">MP4, MOV, AVI up to 500MB</p>
+                        <p className="text-xs text-stone-400 mt-1">MP4, MOV, AVI up to 1GB</p>
                       </>
                     )}
                   </div>
@@ -1358,6 +1367,18 @@ export default function Home() {
                 </Alert>
               )}
 
+              <label className="flex items-start gap-3 rounded-xl border border-stone-200 bg-stone-50 p-3.5">
+                <input
+                  type="checkbox"
+                  checked={sourceRightsConfirmed}
+                  onChange={(event) => setSourceRightsConfirmed(event.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-stone-300 accent-stone-900"
+                />
+                <span className="text-xs leading-relaxed text-stone-600">
+                  I own this video or have permission from the rights holder to download, edit, and publish clips from it.
+                </span>
+              </label>
+
               <p className="text-xs text-stone-500">
                 Completion emails use your user preference in{" "}
                 <Link href="/settings" className="font-medium text-stone-700 underline underline-offset-2">
@@ -1372,7 +1393,8 @@ export default function Home() {
                   (sourceType === "youtube" && !url.trim()) ||
                   (sourceType === "upload" && !fileRef.current) ||
                   generationRequiresUpgrade ||
-                  isLoading
+                  isLoading ||
+                  !sourceRightsConfirmed
                 }
               >
                 {isLoading ? "Processing..." : generationRequiresUpgrade ? "Choose a Paid Plan" : "Process Video"}

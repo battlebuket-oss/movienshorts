@@ -27,6 +27,7 @@ from ...video_utils import VALID_OUTPUT_FORMATS
 from ...admin_auth import require_admin_user
 import redis.asyncio as redis
 from ...clip_editor import export_with_preset, EXPORT_PRESETS
+from ...content_rights import require_source_rights_confirmation
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/tasks", tags=["tasks"])
@@ -171,9 +172,9 @@ async def create_task(request: Request, db: AsyncSession = Depends(get_db)):
     Returns task_id immediately.
     """
     data = await request.json()
-
     raw_source = data.get("source")
     user_id = await _get_user_id_from_headers(request, db)
+    require_source_rights_confirmation(data.get("rights_confirmed"))
 
     # Get font options
     font_options = data.get("font_options", {})

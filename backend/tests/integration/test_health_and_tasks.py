@@ -48,6 +48,7 @@ async def test_create_task_enqueues_a_job(client, db_session, auth_headers):
         json={
             "source": {"url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
             "font_options": {"font_color": "#abcdef", "font_size": 18},
+            "rights_confirmed": True,
         },
     )
 
@@ -55,6 +56,20 @@ async def test_create_task_enqueues_a_job(client, db_session, auth_headers):
     payload = response.json()
     assert payload["task_id"]
     assert payload["job_id"] == "job-test-1"
+
+
+@pytest.mark.asyncio
+async def test_create_task_requires_source_rights_confirmation(client, db_session, auth_headers):
+    await create_user(db_session, user_id="user-1", email="owner@example.com")
+
+    response = await client.post(
+        "/tasks/",
+        headers=auth_headers,
+        json={"source": {"url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"}},
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"]["code"] == "SOURCE_RIGHTS_REQUIRED"
 
 
 @pytest.mark.asyncio
@@ -66,6 +81,7 @@ async def test_create_task_rejects_non_upload_local_paths(client, db_session, au
         headers=auth_headers,
         json={
             "source": {"url": "/etc/passwd"},
+            "rights_confirmed": True,
         },
     )
 

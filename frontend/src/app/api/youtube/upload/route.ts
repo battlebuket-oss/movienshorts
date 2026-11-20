@@ -1,0 +1,19 @@
+import { NextResponse } from "next/server";
+
+import { createProxyResponse, fetchBackend } from "@/server/backend-api";
+import { getServerSession } from "@/server/session";
+
+export async function POST(request: Request) {
+  const session = await getServerSession();
+  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const body = await request.text();
+  const upstream = await fetchBackend("/youtube/upload", {
+    method: "POST",
+    userId: session.user.id,
+    headers: { "Content-Type": "application/json" },
+    body,
+    cache: "no-store",
+  });
+  return createProxyResponse(upstream);
+}
