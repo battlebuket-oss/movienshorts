@@ -350,6 +350,7 @@ export default function Home() {
     const file = e.target.files?.[0] || null;
     fileRef.current = file;
     setFileName(file ? file.name : null);
+    setSourceRightsConfirmed(false);
   };
 
   const handleTemplateChange = (templateId: string) => {
@@ -515,6 +516,7 @@ export default function Home() {
             url: videoUrl,
             title: null
           },
+          rights_confirmed: sourceRightsConfirmed,
           font_options: {
             font_family: fontFamily,
             font_size: fontSize,
@@ -565,6 +567,7 @@ export default function Home() {
       setProgress(0);
       setStatusMessage("");
       setCurrentStep("");
+      setSourceRightsConfirmed(false);
       setFileName(null);
       fileRef.current = null;
       setUrl("");
@@ -897,6 +900,7 @@ export default function Home() {
                     type="button"
                     onClick={() => {
                       setSourceType("youtube");
+                      setSourceRightsConfirmed(false);
                       setFileName(null);
                       fileRef.current = null;
                       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -913,7 +917,7 @@ export default function Home() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setSourceType("upload")}
+                    onClick={() => { setSourceType("upload"); setSourceRightsConfirmed(false); }}
                     disabled={generationControlsDisabled}
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                       sourceType === "upload"
@@ -962,7 +966,7 @@ export default function Home() {
                       type="url"
                       placeholder="https://www.youtube.com/watch?v=..."
                       value={url}
-                      onChange={(e) => setUrl(e.target.value)}
+                      onChange={(e) => { setUrl(e.target.value); setSourceRightsConfirmed(false); }}
                       disabled={generationControlsDisabled}
                       className="h-14 pl-12 text-base rounded-xl border-stone-300 focus:border-stone-500 placeholder:text-stone-400"
                     />
