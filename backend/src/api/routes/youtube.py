@@ -130,7 +130,7 @@ async def _upload_resumable_media(
                 next_offset = _get_acknowledged_upload_offset(
                     response.headers.get("range"), file_size
                 )
-                if next_offset > offset:
+                if next_offset != offset:
                     offset = next_offset
                     retries = 0
                     continue
@@ -166,7 +166,7 @@ async def _upload_resumable_media(
                 server_offset = _get_acknowledged_upload_offset(
                     probe.headers.get("range"), file_size
                 )
-                if server_offset > offset:
+                if server_offset != offset:
                     offset = server_offset
                     retries = 0
                 continue
