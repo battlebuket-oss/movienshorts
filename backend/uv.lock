@@ -4346,6 +4346,7 @@ dependencies = [
     { name = "cryptography" },
     { name = "fastapi" },
     { name = "greenlet" },
+    { name = "httpx" },
     { name = "mediapipe" },
     { name = "numpy" },
     { name = "openai-whisper" },
