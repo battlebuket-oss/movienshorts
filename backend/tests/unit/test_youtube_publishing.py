@@ -34,6 +34,9 @@ def test_upload_metadata_accepts_valid_private_video():
         ("   ", "", "private"),
         ("x" * 101, "", "private"),
         ("A valid title", "x" * 5001, "private"),
+        ("A valid title", "🔥" * 1251, "private"),
+        ("Title <tag>", "", "private"),
+        ("A valid title", "description >", "private"),
         ("A valid title", "", "friends"),
     ],
 )
