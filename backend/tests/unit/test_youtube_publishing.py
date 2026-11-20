@@ -3,6 +3,7 @@ import pytest
 
 from src.api.routes.youtube import (
     OAUTH_SCOPES,
+    _require_upload_rights_confirmation,
     _validate_upload_metadata,
     build_oauth_url,
 )
@@ -43,3 +44,13 @@ def test_upload_metadata_accepts_valid_private_video():
 def test_upload_metadata_rejects_invalid_values(title, description, privacy):
     with pytest.raises(HTTPException):
         _validate_upload_metadata(title, description, privacy)
+
+
+def test_upload_requires_explicit_rights_confirmation():
+    with pytest.raises(HTTPException) as exc:
+        _require_upload_rights_confirmation(False)
+    assert exc.value.status_code == 403
+
+
+def test_upload_accepts_explicit_rights_confirmation():
+    _require_upload_rights_confirmation(True)
