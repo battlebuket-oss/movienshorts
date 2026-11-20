@@ -36,7 +36,6 @@ OAUTH_SCOPES = (
     "https://www.googleapis.com/auth/youtube.readonly",
 )
 MAX_VIDEO_UPLOAD_BYTES = 500 * 1024 * 1024
-UPLOAD_CHUNK_BYTES = 1024 * 1024
 
 
 class OAuthCallbackRequest(BaseModel):
@@ -429,12 +428,27 @@ async def _get_access_token(db: AsyncSession, user_id: str, config) -> str:
                 },
             )
             response.raise_for_status()
-            access_token = response.json().get("access_token")
+            token_data = response.json()
+            access_token = token_data.get("access_token")
         except (httpx.HTTPError, ValueError):
             logger.warning("Unable to refresh YouTube access token for user %s", user_id)
             raise HTTPException(status_code=401, detail="Your YouTube connection expired or was revoked. Reconnect your channel.")
     if not access_token:
         raise HTTPException(status_code=401, detail="Google did not provide a usable YouTube access token. Reconnect your channel.")
+
+    rotated_refresh_token = token_data.get("refresh_token")
+    if rotated_refresh_token:
+        await db.execute(
+            text(
+                "UPDATE youtube_connections SET refresh_token_encrypted = :token, connected_at = NOW() WHERE user_id = :user_id"
+            ),
+            {
+                "token": encrypt_setting_value(rotated_refresh_token),
+                "user_id": user_id,
+            },
+        )
+        await db.commit()
+
     return access_token
 
 
