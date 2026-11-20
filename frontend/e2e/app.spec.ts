@@ -32,6 +32,27 @@ test("regular user can browse seeded tasks and save preferences", async ({ page 
   await expect(page.getByText(/not an admin/i)).toBeVisible();
 });
 
+
+test("creator-focused clip setup requires source rights confirmation", async ({ page }) => {
+  await signIn(page, seed.regular.email, seed.regular.password);
+  await page.goto("/");
+
+  await expect(page.getByText("Creator focus")).toBeVisible();
+  const creatorSelect = page.getByRole("combobox").first();
+  await creatorSelect.click();
+  await page.getByRole("option", { name: /Kai Cenat/ }).click();
+  await expect(creatorSelect).toContainText("Kai Cenat");
+
+  await page.locator("#youtube-url").fill(
+    "https://www.youtube.com/live/VZqAPdUvqnQ?si=playwright-test",
+  );
+  const submitButton = page.getByRole("button", { name: /process video/i });
+  await expect(submitButton).toBeDisabled();
+
+  await page.getByRole("checkbox").check();
+  await expect(submitButton).toBeEnabled();
+});
+
 test("admin user can access the admin dashboard", async ({ page }) => {
   await signIn(page, seed.admin.email, seed.admin.password);
 
