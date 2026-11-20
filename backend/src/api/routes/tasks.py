@@ -172,10 +172,9 @@ async def create_task(request: Request, db: AsyncSession = Depends(get_db)):
     Returns task_id immediately.
     """
     data = await request.json()
-    require_source_rights_confirmation(data.get("rights_confirmed"))
-
     raw_source = data.get("source")
     user_id = await _get_user_id_from_headers(request, db)
+    require_source_rights_confirmation(data.get("rights_confirmed"))
 
     # Get font options
     font_options = data.get("font_options", {})
